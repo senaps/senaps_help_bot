@@ -47,61 +47,28 @@ def update_handler(update):
 
     # React to messages in supergroups and PMs
     if isinstance(update, UpdateNewChannelMessage):
-        words = re.split('\W+', msg.message)
-        for trigger, response in REACTS.items():
-            if len(recent_reacts[msg.to_id.channel_id]) > 3:
-                # Silently ignore triggers if we've recently sent 3 reactions
-                break
-            
-            if trigger in words:
-                # Remove recent replies older than 10 minutes
-                recent_reacts[msg.to_id.channel_id] = [
-                    a for a in recent_reacts[msg.to_id.channel_id] if
-                    datetime.now() - a < timedelta(minutes=10)
-                ]
-                # Send a reaction
-                client.send_message(msg.to_id, response, reply_to=msg.id)
-                # Add this reaction to the list of recent actions
-                recent_reacts[msg.to_id.channel_id].append(datetime.now())
+        message = re.split('\W+', msg.message)[0]
+        if any(message.startswith('!' + s) for s in REACTS.iterkeys()):
+            for trigger, response in REACTS.items():
+                if trigger in message:
+                    # Send a reaction
+                    # TODO: we should handle reply to the quoted user
+                    client.send_message(msg.to_id, response, reply_to=msg.id)
 
-    if isinstance(update, UpdateShortMessage):
-        words = re.split('\W+', msg)
-        for trigger, response in REACTS.items():
-            if len(recent_reacts[update.user_id]) > 3:
-                # Silently ignore triggers if we've recently sent 3 reactions
-                break
+    # if isinstance(update, UpdateShortMessage):
+    #     words = re.split('\W+', msg)
+    #     for trigger, response in REACTS.items():
+    #         if len(recent_reacts[update.user_id]) > 3:
+    #             # Silently ignore triggers if we've recently sent 3 reactions
+    #             break
 
-            if trigger in words:
-                # Send a reaction
-                client.send_message(update.user_id,
-                                    response,
-                                    reply_to=update.id)
-                # Add this reaction to the list of recent reactions
-                recent_reacts[update.user_id].append(datetime.now())
-
-    # Automatically send relevant media when we say certain things
-    # When invoking requests, get_input_entity needs to be called manually
-    if isinstance(update, UpdateNewChannelMessage) and msg.out:
-        if msg.message.lower() == 'x files theme':
-            client.send_voice_note(msg.to_id, 'xfiles.m4a', reply_to=msg.id)
-        if msg.message.lower() == 'anytime':
-            client.send_file(msg.to_id, 'anytime.png', reply_to=msg.id)
-        if '.shrug' in msg.message:
-            client(EditMessageRequest(
-                client.get_input_entity(msg.to_id), msg.id,
-                message=msg.message.replace('.shrug', r'¯\_(ツ)_/¯')
-            ))
- 
-    if isinstance(update, UpdateShortMessage) and update.out:
-        if msg.lower() == 'x files theme':
-            client.send_voice_note(update.user_id, 'xfiles.m4a', reply_to=update.id)
-        if msg.lower() == 'anytime':
-            client.send_file(update.user_id, 'anytime.png', reply_to=update.id)
-        if '.shrug' in msg:
-            client(EditMessageRequest(
-                client.get_input_entity(update.user_id), update.id,
-                message=msg.replace('.shrug', r'¯\_(ツ)_/¯')
-            ))
+    #         if trigger in words:
+    #             # Send a reaction
+    #             client.send_message(update.user_id,
+    #                                 response,
+    #                                 reply_to=update.id)
+    #             # Add this reaction to the list of recent reactions
+    #             recent_reacts[update.user_id].append(datetime.now())
 
 
 if __name__ == '__main__':
@@ -129,7 +96,6 @@ if __name__ == '__main__':
                                        'Please enter your password: ')
                     code_ok = client.sign_in(password=password)
         print('INFO: Client initialized successfully!')
-
         client.add_update_handler(update_handler)
         input('Press Enter to stop this!\n')
     except KeyboardInterrupt:
