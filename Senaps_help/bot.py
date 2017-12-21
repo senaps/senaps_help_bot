@@ -53,19 +53,6 @@ def update_handler(update):
     if isinstance(update, UpdateShortMessage):
         print('pm message' + msg.message)
         myfunction(message=message, msg_type='user', msg=msg)
-    #     words = re.split('\W+', msg)
-    #     for trigger, response in REACTS.items():
-    #         if len(recent_reacts[update.user_id]) > 3:
-    #             # Silently ignore triggers if we've recently sent 3 reactions
-    #             break
-
-    #         if trigger in words:
-    #             # Send a reaction
-    #             client.send_message(update.user_id,
-    #                                 response,
-    #                                 reply_to=update.id)
-    #             # Add this reaction to the list of recent reactions
-    #             recent_reacts[update.user_id].append(datetime.now())
 
 
 def myfunction(message, msg_type, msg):
