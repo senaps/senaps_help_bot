@@ -47,15 +47,12 @@ def update_handler(update):
 
     # React to messages in supergroups and PMs
     if isinstance(update, UpdateNewChannelMessage):
-        message = re.split('\W+', msg.message)[0]
-        if any(message.startswith('!' + s) for s in REACTS.iterkeys()):
-            for trigger, response in REACTS.items():
-                if trigger in message:
-                    # Send a reaction
-                    # TODO: we should handle reply to the quoted user
-                    client.send_message(msg.to_id, response, reply_to=msg.id)
-
-    # if isinstance(update, UpdateShortMessage):
+        if msg.message.startswith('!'):
+            message = re.split('\W+', msg.message)[1]
+            myfunction(message=message, msg_type='group', msg=msg)
+    if isinstance(update, UpdateShortMessage):
+        print('pm message' + msg.message)
+        myfunction(message=message, msg_type='user', msg=msg)
     #     words = re.split('\W+', msg)
     #     for trigger, response in REACTS.items():
     #         if len(recent_reacts[update.user_id]) > 3:
@@ -71,12 +68,26 @@ def update_handler(update):
     #             recent_reacts[update.user_id].append(datetime.now())
 
 
+def myfunction(message, msg_type, msg):
+    for trigger, response in REACTS.items():
+        if trigger in message:
+            # TODO: we should handle reply to the quoted user
+            print('ready to send out the answer!')
+            if msg_type == 'group':
+                client.send_message(msg.to_id, response, reply_to=msg.id)
+            elif msg_type == 'user':
+                client.send_message(update.user_id,
+                                    response,
+                                    reply_to=update.id)
+
 if __name__ == '__main__':
-    session_name = configs.session_name
-    user_phone = configs.phone_number
+    session_name = configs['session_name']
+    user_phone = configs['phone_number']
+    app_id = configs['app_id']
+    hash_id = configs['hash_id']
     # TODO: this should be converted to configparser object.
     client = TelegramClient(
-        configs.session_name, configs.app_id, configs.hash_id,
+        session_name, app_id, hash_id,
         proxy=None, update_workers=4
         )
     try:
